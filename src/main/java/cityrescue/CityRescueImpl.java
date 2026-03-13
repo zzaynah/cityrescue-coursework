@@ -12,17 +12,51 @@ import cityrescue.exceptions.*;
 public class CityRescueImpl implements CityRescue {
 
     // TODO: add fields (map, arrays for stations/units/incidents, counters, tick, etc.)
+    // Map of city
+    private CityMap map;
 
+    // Max storage sizes
+    private static final int MAX_STATIONS = 20;
+    private static final int MAX_UNITS = 50;
+    private static final int MAX_INCIDENTS = 200;
+
+    // Arrays to store objects
+    private Station[] stations;
+    private Unit[] units;
+    private Incident[] incidents;
+
+    // Counters
+    private int stationCount;
+    private int unitCount;
+    private int incidentCount;
+
+    // Simulation time
+    private int tick;
+    
     @Override
     public void initialise(int width, int height) throws InvalidGridException {
         // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        if (width <= 0 || height <= 0) {
+            throw new InvalidGridException();
+        }
+        
+        map = new CityMap(width, height);
+
+        stations = new Station[MAX_STATIONS];
+        units = new Unit[MAX_UNITS];
+        incidents = new Incident[MAX_INCIDENTS];
+
+        stationCount = 0;
+        unitCount = 0;
+        incidentCount = 0;
+
+        tick = 0;
     }
 
     @Override
     public int[] getGridSize() {
         // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        return new int[]{map.getWidth(), map.getHeight()};
     }
 
     @Override
