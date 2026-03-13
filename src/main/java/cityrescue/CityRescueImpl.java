@@ -21,7 +21,7 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public int[] getGridSize() {
-        return new int[]{width, height};
+        return new int[]{map.getWidth(), map.getHeight()};
     }
 
     @Override
