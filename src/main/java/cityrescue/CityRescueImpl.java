@@ -133,7 +133,7 @@ public class CityRescueImpl implements CityRescue {
     public void setStationCapacity(int stationId, int maxUnits) throws IDNotRecognisedException, InvalidCapacityException {
         // TODO: implement
         if (stationId < 0 || stationId >= stationCount || stations[stationId] == null) {
-            throw new IDNotRecognisedException(("Station ID not recognised");
+            throw new IDNotRecognisedException("Station ID not recognised");
         }
 
         if (maxUnits <= 0) {
@@ -146,10 +146,19 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public int[] getStationIds() {
         // TODO: implement
-        int[] ids = new int[stationCount];
+        int count = 0;
 
         for (int i = 0; i < stationCount; i++) {
-            ids[i] = stations[i].getId();
+            if (stations[i] != null) count++;
+        }
+
+        int[] ids = new int[count];
+        int index = 0;
+
+        for (int i = 0; i < stationCount; i++) {
+            if (stations[i] != null) {
+                ids[index++] = stations[i].getId();
+            }
         }
 
         return ids;
@@ -192,13 +201,68 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public void decommissionUnit(int unitId) throws IDNotRecognisedException, IllegalStateException {
         // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        Unit unit = null;
+        int index = -1;
+
+        for (int i = 0; i < unitCount; i++) {
+            if (units[i] != null && units[i].getId() == unitId) {
+                unit = units[i];
+                index = i;
+                break;
+            }
+        }
+
+        if (unit == null) {
+            throw new IDNotRecognisedException("Unit not recognised");
+        }
+
+        if (unit.getStatus() == UnitStatus.EN_ROUTE || unit.getStatus() == UnitStatus.AT_SCENE) {
+            throw new IllegalStateException("Unit currently busy");
+        }
+
+        Station s = stations[unit.getStationId()];
+        s.decrementUnitCount();
+
+        units[index] = null;
     }
 
     @Override
     public void transferUnit(int unitId, int newStationId) throws IDNotRecognisedException, IllegalStateException {
         // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        Unit unit = null;
+
+        for(int i = 0; i < unitCount; i++) {
+            if (units[i] != null && units[i].getId() == unitId) {
+                unit = units[i];
+                break;
+            }
+        }
+
+        if (unit == null) {
+            throw new IDNotRecognisedException("Unit not recognised");
+        }
+
+        if (newStationId < 0 || newStationId >= stationCount || stations[newStationId] == null) {
+            throw new IDNotRecognisedException("Station not recognised");
+        }
+
+        if (unit.getStatus() != UnitStatus.IDLE) {
+            throw new IllegalStateException("Unit must be idle to transfer");
+        }
+
+        Station newStation = stations[newStationId];
+
+        if (newStation.getUnitCount() >= newStation.getCapacity()) {
+            throw new IllegalStateException("Destination station full");
+        }
+
+        Station oldStation = stations[unit.getStationId()];
+        oldStation.decrementUnitCount();
+
+        newStation.incrementUnitCount();
+
+        unit.setStationId(newStationId);
+        unit.setLocation(newStation.getX(), newStation.getY());
     }
 
     @Override
