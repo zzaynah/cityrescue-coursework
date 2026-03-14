@@ -37,7 +37,7 @@ public class CityRescueImpl implements CityRescue {
     public void initialise(int width, int height) throws InvalidGridException {
         // TODO: implement
         if (width <= 0 || height <= 0) {
-            throw new InvalidGridException();
+            throw new InvalidGridException("Invalid grid size");
         }
         
         map = new CityMap(width, height);
@@ -62,13 +62,21 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public void addObstacle(int x, int y) throws InvalidLocationException {
         // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        if (!map.inBounds(x, y)) {
+            throw new InvalidLocationException("Invalid location");
+        }
+
+        map.addObstacle(x, y);
     }
 
     @Override
     public void removeObstacle(int x, int y) throws InvalidLocationException {
         // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        if (!map.inBounds(x, y)) {
+            throw new InvalidLocationException("Invalid location");
+        }
+
+        map.removeObstacle(x, y);
     }
 
     @Override
