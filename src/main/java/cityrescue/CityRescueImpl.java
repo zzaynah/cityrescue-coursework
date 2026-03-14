@@ -121,7 +121,7 @@ public class CityRescueImpl implements CityRescue {
 
         for (int i = 0; i < unitCount; i++) { 
             if (units[i] != null && units[i].getStationId() == stationId) {
-                throw new IllegalStateException("Station still has units")
+                throw new IllegalStateException("Station still has units");
             }
         }
 
@@ -158,7 +158,35 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public int addUnit(int stationId, UnitType type) throws IDNotRecognisedException, InvalidUnitException, IllegalStateException {
         // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        if (type == null) {
+            throw new InvalidUnitException("Unit type cannot be null");
+        }
+
+        if (stationId < 0 || stationId >= stationCount || stations[stationId] == null) {
+            throw new IDNotRecognisedException("Station not recognised");
+        }
+
+        if (unitCount >= MAX_UNITS) {
+            throw new IllegalStateException("Maximum units reached");
+        }
+
+        Station s = stations[stationId];
+
+        if (s.getUnitCount() >= s.getCapacity()) {
+            throw new IllegalStateException("Station has no free capacity");
+        }
+
+        int unitId = unitCount + 1;
+
+        Unit unit = new Unit(unitId, type, stationId, s.getX(), s.getY());
+
+        units[unitCount] = unit;
+
+        unitCount ++;
+
+        s.incrementUnitCount();
+
+        return unitId;
     }
 
     @Override
