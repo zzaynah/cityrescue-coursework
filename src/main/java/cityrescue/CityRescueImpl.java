@@ -1,5 +1,7 @@
 package cityrescue;
 
+import java.util.Arrays;
+
 import cityrescue.enums.*;
 import cityrescue.exceptions.*;
 
@@ -268,13 +270,52 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public void setUnitOutOfService(int unitId, boolean outOfService) throws IDNotRecognisedException, IllegalStateException {
         // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        Unit unit = null;
+
+        for (int i = 0; i < unitCount; i++) { 
+            if (units[i] != null && units[i].getId() == unitId) {
+                unit = units[i];
+                break;
+            }
+        }
+
+        if (unit == null) {
+            throw new IDNotRecognisedException("Unit not recognised");
+        }
+
+        if (outOfService) {
+            if (unit.getStatus() != UnitStatus.IDLE) {
+                throw new IllegalStateException("Unit currently busy");
+            }
+            unit.setStatus(UnitStatus.OUT_OF_SERVICE);
+
+        } else {
+            if (unit.getStatus() != UnitStatus.OUT_OF_SERVICE) {
+                throw new IllegalStateException("Unit is not out of service");
+            }
+            unit.setStatus(UnitStatus.IDLE);
+        }
     }
 
     @Override
     public int[] getUnitIds() {
         // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        int count = 0;
+
+        for (int i = 0; i < unitCount; i++) {
+            if (units[i] != null) count++;
+        }
+
+        int[] ids = new int[count];
+        int index = 0;
+
+        for (int i = 0; i < unitCount; i++) {
+            if (units[i] != null) {
+                ids[index++] = units[i].getId();
+            }
+        }
+
+        return ids;
     }
 
     @Override
