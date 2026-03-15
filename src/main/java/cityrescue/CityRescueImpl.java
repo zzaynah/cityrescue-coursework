@@ -363,19 +363,80 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public int reportIncident(IncidentType type, int severity, int x, int y) throws InvalidSeverityException, InvalidLocationException {
         // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        if (type == null) {
+            throw new IllegalArgumentException("Incident type cannot be null");
+        }
+
+        if (severity < 1 || severity > 5) {
+            throw new InvalidSeverityException("Incident severity must be between 1 and 5");
+        }
+
+        if (!map.inBounds(x, y)) {
+            throw new InvalidLocationException("Incident location is out of bounds");
+        }
+
+        if (map.isBlocked(x, y)) {
+            throw new InvalidLocationException("Incident location is blocked");
+        }
+
+        if (incidentCount >= MAX_INCIDENTS) {
+            throw new IllegalStateException("Max number of incidents reached");
+        }
+
+        int id = incidentCount + 1;
+
+        Incident incident = new Incident(id, type, severity, x, y);
+
+        incidents[incidentCount] = incident;
+
+        incidentCount++;
+
+        return id;
     }
 
     @Override
     public void cancelIncident(int incidentId) throws IDNotRecognisedException, IllegalStateException {
         // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        Incident incident = findIncident(incidentId);
+
+        if (incident == null) {
+            throw new IDNotRecognisedException("Incident ID not recognised");
+        }
+
+        if (incident.getStatus() != IncidentStatus.REPORTED && incident.getStatus() != IncidentStatus.DISPATCHED) {
+            throw new IllegalStateException("Incident cannot be cancelled in its current state");
+        }
+
+        if (incident.getStatus() == IncidentStatus.DISPATCHED) {
+            Unit unit = findUnit(incident.getUnitId());
+
+            if (unit != null) {
+                unit.setStatus(UnitStatus.IDLE);
+                unit.clearIncident();
+            }
+        }
+
+        incident.setStatus(IncidentStatus.CANCELLED);
     }
 
     @Override
     public void escalateIncident(int incidentId, int newSeverity) throws IDNotRecognisedException, InvalidSeverityException, IllegalStateException {
         // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        Incident incident = findIncident(incidentId);
+
+        if (incident == null) {
+            throw new IDNotRecognisedException("Incident ID not recognised");
+        }
+
+        if (newSeverity < 1 || newSeverity > 5) {
+            throw new InvalidSeverityException("Severity must be between 1 and 5");
+        }
+
+        if (incident.getStatus() == IncidentStatus.RESOLVED || incident.getStatus() == IncidentStatus.CANCELLED) {
+            throw new IllegalStateException("Cannot escalate a resolved or cancelled incident");
+        }
+
+        incident.setSeverity(newSeverity);
     }
 
     @Override
@@ -387,7 +448,19 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public String viewIncident(int incidentId) throws IDNotRecognisedException {
         // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        Incident incident = findIncident(incidentId);
+
+        if (incident == null) {
+            throw new IDNotRecognisedException("Incident ID not recognised");
+        }
+
+        String unit = "-";
+
+        if (incident.getUnitId() != -1) {
+            unit = String.valueOf(incident.getUnitId());
+        }
+
+        return "I#" + incident.getId() + " TYPE=" + incident.getType() + "SEV=" + incident.getSeverity() + " LOC=(" + incident.getX() + "," + incident.getY() + ")" + " STATUS=" + incident.getStatus() + " UNIT=" + unit;
     }
 
     @Override
