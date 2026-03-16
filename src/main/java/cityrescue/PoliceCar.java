@@ -4,7 +4,7 @@ import cityrescue.enums.*;
 
 public class PoliceCar extends Unit {
 
-    public PoliceCar(int id, int x, int y, int homeStationId) {
+    public PoliceCar(int id, int homeStationId, int x, int y) {
         super(id, UnitType.POLICE_CAR, x, y, homeStationId);
     }
 

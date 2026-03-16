@@ -62,8 +62,16 @@ public abstract class Unit {
         this.assignedIncidentId = incidentId;
     }
 
+    public void clearIncident() {
+        this.assignedIncidentId = -1;
+    }
+
     public int getHomeStationId() {
         return homeStationId;
+    }
+
+    public void setHomeStationId(int stationId) {
+        this.homeStationId = stationId;
     }
 
     public abstract boolean canHandle(IncidentType type);

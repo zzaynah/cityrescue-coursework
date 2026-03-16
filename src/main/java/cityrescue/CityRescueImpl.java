@@ -190,7 +190,7 @@ public class CityRescueImpl implements CityRescue {
             if (stations[i] != null) count++;
         }
 
-        int[] ids = new int[count];
+        int[] ids = new int[count]; 
 
         int index = 0;
 
@@ -250,7 +250,7 @@ public class CityRescueImpl implements CityRescue {
 
         unitCount++;
 
-        station.incrementUnitCount();
+        station.addUnit();
 
         return id;
     }
@@ -269,7 +269,7 @@ public class CityRescueImpl implements CityRescue {
         }
 
         Station station = findStation(unit.getHomeStationId());
-        station.decrementUnitCount();
+        station.removeUnit();
 
         for (int i = 0; i < unitCount; i++) {
             if (units[i] != null && units[i].getId() == unitId) {
@@ -301,12 +301,12 @@ public class CityRescueImpl implements CityRescue {
             throw new IllegalStateException("Destination station full");
         }
 
-        Station oldStation = findStation(unit.getStationId();
-    )
-        oldStation.decrementUnitCount();
-        newStation.incrementUnitCount();
+        Station oldStation = findStation(unit.getHomeStationId());
 
-        unit.setStationId(newStationId);
+        oldStation.removeUnit();
+        newStation.addUnit();
+
+        unit.setHomeStationId(newStationId);
         unit.setLocation(newStation.getX(), newStation.getY());
     }
 
@@ -321,7 +321,7 @@ public class CityRescueImpl implements CityRescue {
 
         if (outOfService) {
             if (unit.getStatus() != UnitStatus.IDLE) {
-                throw new IllegalStateException("Unit must be idle to transfer");
+                throw new IllegalStateException("Unit must be idle to go out of service");
             }
             unit.setStatus(UnitStatus.OUT_OF_SERVICE);
 
@@ -357,14 +357,34 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public String viewUnit(int unitId) throws IDNotRecognisedException {
         // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        Unit unit = findUnit(unitId);
+
+        if (unit == null) {
+            throw new IDNotRecognisedException("Unit ID not recognised");
+        }
+        
+        String incident = "-";
+        if (unit.getIncidentId() != -1) {
+            incident = String.valueOf(unit.getIncidentId());
+        }
+
+        return String.format(
+            "U#%d TYPE=%s HOME=%d LOC=(%d,%d) STATUS=%s INCIDENT=%s",
+            unit.getId(),
+            unit.getType(),
+            unit.getHomeStationId(),
+            unit.getX(),
+            unit.getY(),
+            unit.getStatus(),
+            incident
+        );
     }
 
     @Override
     public int reportIncident(IncidentType type, int severity, int x, int y) throws InvalidSeverityException, InvalidLocationException {
         // TODO: implement
         if (type == null) {
-            throw new IllegalArgumentException("Incident type cannot be null");
+            throw new InvalidSeverityException("Incident type cannot be null");
         }
 
         if (severity < 1 || severity > 5) {
@@ -408,7 +428,7 @@ public class CityRescueImpl implements CityRescue {
         }
 
         if (incident.getStatus() == IncidentStatus.DISPATCHED) {
-            Unit unit = findUnit(incident.getUnitId());
+            Unit unit = findUnit(incident.getAssignedUnitId());
 
             if (unit != null) {
                 unit.setStatus(UnitStatus.IDLE);
@@ -442,7 +462,22 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public int[] getIncidentIds() {
         // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        int count = 0;
+
+        for (int i = 0; i < incidentCount; i++) {
+            if (incidents[i] != null) count++;
+        }
+
+        int[] ids = new int[count];
+        int index = 0;
+
+        for (int i = 0; i < incidentCount; i++) {
+            if (incidents[i] != null) {
+                ids[index++] = incidents[i].getId();
+            }
+        }
+
+        return ids;
     }
 
     @Override
@@ -456,11 +491,20 @@ public class CityRescueImpl implements CityRescue {
 
         String unit = "-";
 
-        if (incident.getUnitId() != -1) {
-            unit = String.valueOf(incident.getUnitId());
+        if (incident.getAssignedUnitId() != -1) {
+            unit = String.valueOf(incident.getAssignedUnitId());
         }
 
-        return "I#" + incident.getId() + " TYPE=" + incident.getType() + "SEV=" + incident.getSeverity() + " LOC=(" + incident.getX() + "," + incident.getY() + ")" + " STATUS=" + incident.getStatus() + " UNIT=" + unit;
+        return String.format(
+            "I#%d TYPE=%s SEV=%d LOC=(%d,%d) STATUS=%s UNIT=%s",
+            incident.getId(),
+            incident.getType(),
+            incident.getSeverity(),
+            incident.getX(),
+            incident.getY(),
+            incident.getStatus(),
+            unit
+        );
     }
 
     @Override
