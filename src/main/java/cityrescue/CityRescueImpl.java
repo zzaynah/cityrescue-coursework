@@ -545,7 +545,52 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public void tick() {
         // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        tick++;
+
+        for (int i = 0; i < unitCount; i++) {
+            Unit unit = units[i];
+            if (unit == null) continue;
+            if (unit.getStatus() == UnitStatus.EN_ROUTE) {
+                Incident incident = findIncident(unit.getIncidentId());
+                if (incident == null) continue;
+
+                int ux = unit.getX();
+                int uy = unit.getY();
+                int ix = incident.getX();
+                int iy = incident.getY();
+
+                if (ux < ix) ux++;
+                else if (ux > ix) ux--;
+                else if (uy < iy) uy++;
+                else if (uy > iy) uy--;
+
+                unit.setLocation(ux, uy);
+
+                if (ux == ix && uy ==iy) {
+                    unit.setStatus(UnitStatus.AT_SCENE);
+                }
+            }
+        }
+
+        for (int i = 0; i < unitCount; i++) {
+            Unit unit = units[i];
+            if (unit == null) continue;
+            if (unit.getStatus() == UnitStatus.AT_SCENE) {
+                Incident incident = findIncident(unit.getIncidentId());
+                if (incident == null) continue;
+
+                int requiredTicks = unit.getTicksToResolve(incident.getSeverity());
+
+                incident.setSeverity(incident.getSeverity() - 1);
+
+                if (incident.getSeverity() <= 0) {
+                    incident.setStatus(IncidentStatus.RESOLVED);
+
+                    unit.setStatus(UnitStatus.IDLE);
+                    unit.clearIncident();
+                }
+            }
+        }
     }
 
     @Override
