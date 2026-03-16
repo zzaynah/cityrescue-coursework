@@ -512,7 +512,7 @@ public class CityRescueImpl implements CityRescue {
         // TODO: implement
         for (int i = 0; i < incidentCount; i++) {
             Incident incident = incidents[i];
-            if (inciednt == null) continue;
+            if (incident == null) continue;
             if (incident.getStatus() != IncidentStatus.REPORTED) continue;
 
             Unit bestUnit = null;
