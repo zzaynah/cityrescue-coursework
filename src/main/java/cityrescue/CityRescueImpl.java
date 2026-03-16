@@ -368,7 +368,7 @@ public class CityRescueImpl implements CityRescue {
             incident = String.valueOf(unit.getIncidentId());
         }
 
-        return String.format(
+        String result = String.format(
             "U#%d TYPE=%s HOME=%d LOC=(%d,%d) STATUS=%s INCIDENT=%s",
             unit.getId(),
             unit.getType(),
@@ -378,6 +378,13 @@ public class CityRescueImpl implements CityRescue {
             unit.getStatus(),
             incident
         );
+
+        if (unit.getStatus() == UnitStatus.AT_SCENE) {
+            result += " WORK=" + unit.getWorkTicks();
+        }
+
+        return result;
+
     }
 
     @Override
@@ -537,6 +544,7 @@ public class CityRescueImpl implements CityRescue {
                 incident.setStatus(IncidentStatus.DISPATCHED);
 
                 bestUnit.setIncidentId(incident.getId());
+                bestUnit.resetWorkTicks();
                 bestUnit.setStatus(UnitStatus.EN_ROUTE);
             }
         }
@@ -566,7 +574,7 @@ public class CityRescueImpl implements CityRescue {
 
                 unit.setLocation(ux, uy);
 
-                if (ux == ix && uy ==iy) {
+                if (ux == ix && uy == iy) {
                     unit.setStatus(UnitStatus.AT_SCENE);
                 }
             }
@@ -579,15 +587,16 @@ public class CityRescueImpl implements CityRescue {
                 Incident incident = findIncident(unit.getIncidentId());
                 if (incident == null) continue;
 
+                unit.incrementWorkTicks();
+
                 int requiredTicks = unit.getTicksToResolve(incident.getSeverity());
 
-                incident.setSeverity(incident.getSeverity() - 1);
-
-                if (incident.getSeverity() <= 0) {
+                if (unit.getWorkTicks() >= requiredTicks) {
                     incident.setStatus(IncidentStatus.RESOLVED);
 
                     unit.setStatus(UnitStatus.IDLE);
                     unit.clearIncident();
+                    unit.resetWorkTicks();
                 }
             }
         }

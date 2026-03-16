@@ -16,6 +16,8 @@ public abstract class Unit {
 
     protected int assignedIncidentId = -1;
 
+    protected int workTicks;
+
     public Unit(int id, UnitType type, int x, int y, int homeStationId) {
         this.id = id;
         this.type = type;
@@ -72,6 +74,18 @@ public abstract class Unit {
 
     public void setHomeStationId(int stationId) {
         this.homeStationId = stationId;
+    }
+
+    public int getWorkTicks() {
+        return workTicks;
+    }
+
+    public void incrementWorkTicks() {
+        workTicks++;
+    }
+
+    public void resetWorkTicks() {
+        workTicks = 0;
     }
 
     public abstract boolean canHandle(IncidentType type);
