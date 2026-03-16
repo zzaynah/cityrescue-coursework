@@ -510,7 +510,36 @@ public class CityRescueImpl implements CityRescue {
     @Override
     public void dispatch() {
         // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        for (int i = 0; i < incidentCount; i++) {
+            Incident incident = incidents[i];
+            if (inciednt == null) continue;
+            if (incident.getStatus() != IncidentStatus.REPORTED) continue;
+
+            Unit bestUnit = null;
+            int bestDistance = Integer.MAX_VALUE;
+
+            for (int j = 0; j < unitCount; j++) {
+                Unit unit = units[j];
+                if (unit == null) continue;
+                if (unit.getStatus() != UnitStatus.IDLE) continue;
+                if (!unit.canHandle(incident.getType())) continue;
+
+                int distance = Math.abs(unit.getX() - incident.getX()) + Math.abs(unit.getY() - incident.getY());
+
+                if (bestUnit == null || distance < bestDistance || (distance == bestDistance && unit.getId() < bestUnit.getId())) {
+                    bestUnit = unit;
+                    bestDistance = distance;
+                }
+            }
+
+            if (bestUnit != null) {
+                incident.setAssignedUnitId(bestUnit.getId());
+                incident.setStatus(IncidentStatus.DISPATCHED);
+
+                bestUnit.setIncidentId(incident.getId());
+                bestUnit.setStatus(UnitStatus.EN_ROUTE);
+            }
+        }
     }
 
     @Override
