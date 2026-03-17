@@ -98,6 +98,8 @@ public class CityRescueImpl implements CityRescue {
         }
 
         map.addObstacle(x, y);
+
+        obstacleCount++;
     }
 
     @Override
@@ -108,6 +110,8 @@ public class CityRescueImpl implements CityRescue {
         }
 
         map.removeObstacle(x, y);
+
+        obstacleCount--;
     }
 
     @Override
@@ -604,7 +608,34 @@ public class CityRescueImpl implements CityRescue {
 
     @Override
     public String getStatus() {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
+        StringBuilder st = new StringBuilder();
+
+        st.append(String.format("TICK=%d\n", tick));
+
+        st.append(String.format("STATIONS=%d UNITS=%d INCIDENTS=%d OBSTACLES=%d\n"
+            stationCount, unitCount, incidentCount, obstacleCount));
+
+        st.append("INCIDENTS\n");
+        for (int i = 0; i < incidentCount; i++) {
+            if(incidents[i] != null) {
+                try {
+                    st.append(viewIncident(incidents[i].getId()));
+                } catch (IDNotRecognisedException e) {
+                    st.append("Incident is unrecognizable.\n");
+                }
+            }
+        }    
+        
+        st.append("UNITS\n");
+        for (int i = 0; i < unitCount; i++) {
+            if(units[i] != ) {
+                try {
+                    st.append(viewUnit(units[i].getId()));
+                } catch (IDNotRecognisedException e) {
+                    st.append("Unit is unrecognizable.\n");
+                }
+            }
+        }
+        return st.toString();
     }
 }
