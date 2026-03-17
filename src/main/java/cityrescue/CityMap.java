@@ -5,7 +5,6 @@ public class CityMap {
     private int width;
     private int height;
     private boolean[][] blocked;
-    private int obstacleCount;
 
     public CityMap(int width, int height) {
         this.width = width;

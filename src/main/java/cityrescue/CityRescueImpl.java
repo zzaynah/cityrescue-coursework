@@ -1,7 +1,5 @@
 package cityrescue;
 
-import java.util.Arrays;
-
 import cityrescue.enums.*;
 import cityrescue.exceptions.*;
 
@@ -98,8 +96,6 @@ public class CityRescueImpl implements CityRescue {
         }
 
         map.addObstacle(x, y);
-
-        obstacleCount++;
     }
 
     @Override
@@ -110,8 +106,6 @@ public class CityRescueImpl implements CityRescue {
         }
 
         map.removeObstacle(x, y);
-
-        obstacleCount--;
     }
 
     @Override
@@ -610,32 +604,38 @@ public class CityRescueImpl implements CityRescue {
     public String getStatus() {
         StringBuilder st = new StringBuilder();
 
+        int obstacleCount = 0;
+        for (int x = 0; x < map.getWidth(); x++) {
+            for (int y = 0; x < map.getHeight(); x++) {
+                if (map.isBlocked(x, y)) {
+                    obstacleCount++;
+                }
+            }
+        }
+
         st.append(String.format("TICK=%d\n", tick));
 
-        st.append(String.format("STATIONS=%d UNITS=%d INCIDENTS=%d OBSTACLES=%d\n"
-            stationCount, unitCount, incidentCount, obstacleCount));
+        st.append(String.format("STATIONS=%d UNITS=%d INCIDENTS=%d OBSTACLES=%d\n", stationCount, unitCount, incidentCount, obstacleCount));
 
         st.append("INCIDENTS\n");
         for (int i = 0; i < incidentCount; i++) {
             if(incidents[i] != null) {
                 try {
-                    st.append(viewIncident(incidents[i].getId()));
+                    st.append(viewIncident(incidents[i].getId())).append("\n");
                 } catch (IDNotRecognisedException e) {
-                    st.append("Incident is unrecognizable.\n");
                 }
             }
         }    
         
         st.append("UNITS\n");
         for (int i = 0; i < unitCount; i++) {
-            if(units[i] != ) {
+            if(units[i] != null) {
                 try {
-                    st.append(viewUnit(units[i].getId()));
+                    st.append(viewUnit(units[i].getId())).append("\n");
                 } catch (IDNotRecognisedException e) {
-                    st.append("Unit is unrecognizable.\n");
                 }
             }
         }
-        return st.toString();
+        return st.toString().trim();
     }
 }
