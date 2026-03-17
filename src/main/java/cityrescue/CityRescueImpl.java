@@ -61,6 +61,41 @@ public class CityRescueImpl implements CityRescue {
         return null;
     }
 
+    private void moveUnitTowards(Unit unit, Incident incident) {
+        int[][] directions = {
+            {0, -1}, {1, 0}, {0, 1}, {-1, 0}
+        };
+
+        int ux = unit.getX();
+        int uy = unit.getY();
+
+        int currentDist = Math.abs(ux - incident.getX()) + Math.abs(uy - incident.getY());
+
+        for (int[] d : directions) {
+            int nx = ux + d[0];
+            int ny = uy + d[1];
+
+            if (!map.inBounds(nx, ny) || map.isBlocked(nx, ny)) continue;
+
+            int newDist = Math.abs(nx - incident.getX()) + Math.abs(ny - incident.getY());
+
+            if (newDist < currentDist) {
+                unit.setLocation(nx, ny);
+                return;
+            }
+        }
+
+        for (int[] d : directions) {
+            int nx = ux + d[0];
+            int ny = uy + d[1];
+
+            if (!map.inBounds(nx, ny) || map.isBlocked(nx, ny)) continue;
+
+            unit.setLocation(nx, ny);
+            return;
+        }
+    }
+
 
     @Override
     public void initialise(int width, int height) throws InvalidGridException {
@@ -266,12 +301,13 @@ public class CityRescueImpl implements CityRescue {
             throw new IllegalStateException("Unit cannot be decommissioned while busy");
         }
 
-        Station station = findStation(unit.getHomeStationId());
-        station.removeUnit();
-
         for (int i = 0; i < unitCount; i++) {
             if (units[i] != null && units[i].getId() == unitId) {
                 units[i] = null;
+
+                Station station = findStation(unit.getHomeStationId());
+                station.removeUnit();
+
                 return;
             }
         }
@@ -438,6 +474,7 @@ public class CityRescueImpl implements CityRescue {
             if (unit != null) {
                 unit.setStatus(UnitStatus.IDLE);
                 unit.clearIncident();
+                incident.setAssignedUnitId(-1);
             }
         }
 
@@ -531,7 +568,7 @@ public class CityRescueImpl implements CityRescue {
 
                 int distance = Math.abs(unit.getX() - incident.getX()) + Math.abs(unit.getY() - incident.getY());
 
-                if (bestUnit == null || distance < bestDistance || (distance == bestDistance && unit.getId() < bestUnit.getId())) {
+                if (bestUnit == null || distance < bestDistance || (distance == bestDistance && unit.getId() < bestUnit.getId()) || (distance == bestDistance && unit.getId() == bestUnit.getId() && unit.getHomeStationId() < bestUnit.getHomeStationId())) {
                     bestUnit = unit;
                     bestDistance = distance;
                 }
@@ -556,46 +593,52 @@ public class CityRescueImpl implements CityRescue {
         for (int i = 0; i < unitCount; i++) {
             Unit unit = units[i];
             if (unit == null) continue;
-            if (unit.getStatus() == UnitStatus.EN_ROUTE) {
-                Incident incident = findIncident(unit.getIncidentId());
-                if (incident == null) continue;
+            if (unit.getStatus() != UnitStatus.EN_ROUTE) continue;
 
-                int ux = unit.getX();
-                int uy = unit.getY();
-                int ix = incident.getX();
-                int iy = incident.getY();
+            Incident incident = findIncident(unit.getIncidentId());
+            if (incident == null) continue;
 
-                if (ux < ix) ux++;
-                else if (ux > ix) ux--;
-                else if (uy < iy) uy++;
-                else if (uy > iy) uy--;
+            moveUnitTowards(unit, incident);
+        }
 
-                unit.setLocation(ux, uy);
+        for (int i = 0; i < unitCount; i++) {
+            Unit unit = units[i];
+            if (unit == null) continue;
+            if (unit.getStatus() != UnitStatus.EN_ROUTE) continue;
+            
+            Incident incident = findIncident(unit.getIncidentId());
+            if (incident == null) continue;
 
-                if (ux == ix && uy == iy) {
-                    unit.setStatus(UnitStatus.AT_SCENE);
-                }
+            if (unit.getX() == incident.getX() && unit.getY() == incident.getY()) {
+                unit.setStatus(UnitStatus.AT_SCENE);
+                incident.setStatus(IncidentStatus.IN_PROGRESS);
             }
         }
 
         for (int i = 0; i < unitCount; i++) {
             Unit unit = units[i];
             if (unit == null) continue;
-            if (unit.getStatus() == UnitStatus.AT_SCENE) {
-                Incident incident = findIncident(unit.getIncidentId());
-                if (incident == null) continue;
+            if (unit.getStatus() != UnitStatus.AT_SCENE) continue;
+            
+            unit.incrementWorkTicks();
+        }
 
-                unit.incrementWorkTicks();
+        for (int j = 0; j < incidentCount; j++) {
+            Incident incident = incidents[j];
+            if (incident == null) continue;
+            if (incident.getStatus() != IncidentStatus.IN_PROGRESS) continue;
 
-                int requiredTicks = unit.getTicksToResolve(incident.getSeverity());
+            Unit unit = findUnit(incident.getAssignedUnitId());
+            if (unit == null) continue;
 
-                if (unit.getWorkTicks() >= requiredTicks) {
-                    incident.setStatus(IncidentStatus.RESOLVED);
+            int required = unit.getTicksToResolve(incident.getSeverity());
 
-                    unit.setStatus(UnitStatus.IDLE);
-                    unit.clearIncident();
-                    unit.resetWorkTicks();
-                }
+            if (unit.getWorkTicks() >= required) {
+                incident.setStatus(IncidentStatus.RESOLVED);
+
+                unit.setStatus(UnitStatus.IDLE);
+                unit.clearIncident();
+                unit.resetWorkTicks();
             }
         }
     }
@@ -606,7 +649,7 @@ public class CityRescueImpl implements CityRescue {
 
         int obstacleCount = 0;
         for (int x = 0; x < map.getWidth(); x++) {
-            for (int y = 0; x < map.getHeight(); x++) {
+            for (int y = 0; y < map.getHeight(); y++) {
                 if (map.isBlocked(x, y)) {
                     obstacleCount++;
                 }
@@ -615,7 +658,11 @@ public class CityRescueImpl implements CityRescue {
 
         st.append(String.format("TICK=%d\n", tick));
 
-        st.append(String.format("STATIONS=%d UNITS=%d INCIDENTS=%d OBSTACLES=%d\n", stationCount, unitCount, incidentCount, obstacleCount));
+        int realStations = getStationIds().length;
+        int realUnits = getUnitIds().length;
+        int realIncidents = getIncidentIds().length;
+
+        st.append(String.format("STATIONS=%d UNITS=%d INCIDENTS=%d OBSTACLES=%d\n", realStations, realUnits, realIncidents, obstacleCount));
 
         st.append("INCIDENTS\n");
         for (int i = 0; i < incidentCount; i++) {
