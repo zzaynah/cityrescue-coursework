@@ -4,14 +4,15 @@ import cityrescue.enums.*;
 import cityrescue.exceptions.*;
 
 /**
- * CityRescueImpl (Starter)
+ * CityRescueImpl.java is the main implementation of the CityRescue interface.
+ * It is used to handle all the rescue operations, units, stations, incidents, obstacles,
+ * and handles the resolutions to incidents over time.
  *
- * Your task is to implement the full specification.
- * You may add additional classes in any package(s) you like.
+ * This class tracks the units, stations and incidents. It allows removal or addition of stations,
+ * increasing and decommissioning units, reporting and cancelling incidents and finally has time ticks.
  */
 public class CityRescueImpl implements CityRescue {
 
-    // TODO: add fields (map, arrays for stations/units/incidents, counters, tick, etc.)
     // Map of city
     private CityMap map;
 
@@ -34,6 +35,12 @@ public class CityRescueImpl implements CityRescue {
     private int tick;
     
     //Helpers
+    /**
+     * Searches and returns station with a specific ID
+     *
+     * @param stationId the unique identification of the station to search
+     * @return station if found, null otherwise
+     */
     private Station findStation(int stationId) {
         for (int i = 0; i < stationCount; i++) {
             if (stations[i] != null && stations[i].getId() == stationId) {
@@ -43,6 +50,12 @@ public class CityRescueImpl implements CityRescue {
         return null;
     }
 
+    /**
+     * Searches and returns the unit with a specific ID
+     *
+     * @param unitId the unique identification of the unit to search
+     * @return unit if found, null otherwise
+     */
     private Unit findUnit(int unitId) {
         for (int i = 0; i < unitCount; i++) {
             if (units[i] != null && units[i].getId() == unitId) {
@@ -52,6 +65,12 @@ public class CityRescueImpl implements CityRescue {
         return null;
     }
 
+    /**
+     * Searches and returns the incident with a specific ID
+     *
+     * @param incidentId the unique identification of the incident to search
+     * @return incident if found, null otherwise
+     */
     private Incident findIncident(int incidentId) {
         for (int i = 0; i < incidentCount; i++) {
             if (incidents[i] != null && incidents[i].getId() == incidentId) {
@@ -61,6 +80,20 @@ public class CityRescueImpl implements CityRescue {
         return null;
     }
 
+    /**
+     * Following a set of movement rules, the unit moves towards the incident.
+     * This is chosen based on Manhattan distance.
+     * Avoids obstacles and checks moves available in the order of ("north", "east", "south", "west").
+     * If multiple moves are available:
+     * - lists the moves in the order or N,E,S,W
+     * - ignores moves going out of bounds
+     * - takes the move which would reduce Manhattan distance to the target
+     * - if tied, takes the first move available in the order N,E,S,W
+     * - if no legal move, unit stays put
+     *
+     * @param unit this is the unit moving
+     * @param incident this is the incident the unit is responding to
+     */
     private void moveUnitTowards(Unit unit, Incident incident) {
         int[][] directions = {
             {0, -1}, {1, 0}, {0, 1}, {-1, 0}
@@ -97,6 +130,15 @@ public class CityRescueImpl implements CityRescue {
     }
 
 
+    /**
+     * Initialises city rescue with a predefined map size.
+     * Sets up a grid of the map empty and stores stations, units and incidents in arrays.
+     * Begins with 0 incidents, stations and units and sets tick to 0
+     *
+     * @param width width of the grid
+     * @param height height of the grid
+     * @throws InvalidGridException if grid is invalid or not within the restrictions
+     */
     @Override
     public void initialise(int width, int height) throws InvalidGridException {
         // TODO: implement
@@ -117,12 +159,25 @@ public class CityRescueImpl implements CityRescue {
         tick = 0;
     }
 
+    /**
+     * Returns the current size of the city as an array [width, height]
+     *
+     * @return array with the width and height of the grid
+     */
     @Override
     public int[] getGridSize() {
         // TODO: implement
         return new int[]{map.getWidth(), map.getHeight()};
     }
 
+    /**
+     * Adds an obstacle in the coordinates selected within the map grid.
+     * Checks that the chosen coordinates are within the boundaries otherwise, throws an exception.
+     *
+     * @param x the x coordinate in the map where the obstacle is to be added in
+     * @param y the y coordinate in the map where the obstacle is to be added in
+     * @throws InvalidLocationException if coordinates are not within the bounds
+     */
     @Override
     public void addObstacle(int x, int y) throws InvalidLocationException {
         // TODO: implement
@@ -133,6 +188,14 @@ public class CityRescueImpl implements CityRescue {
         map.addObstacle(x, y);
     }
 
+    /**
+     * Removes an obstacle in the coordinates selected within the map grid.
+     * Checks that the chosen coordinates are within the boundaries, otherwise throws an exception.
+     *
+     * @param x the x coordinate in the map where the obstacle is to be removed in
+     * @param y the y coordinate in the map where the obstacle is to be removed in
+     * @throws InvalidLocationException if coordinates are not within the bounds
+     */
     @Override
     public void removeObstacle(int x, int y) throws InvalidLocationException {
         // TODO: implement
@@ -143,6 +206,18 @@ public class CityRescueImpl implements CityRescue {
         map.removeObstacle(x, y);
     }
 
+    /**
+     * Adds a station in the coordinates selected within the map grid.
+     * Checks to see if the name of the station is not blank, the location is within the boundaries,
+     * and that maximum number of stations has not been exceeded, otherwise throws an exception.
+     *
+     * @param name the name of the new station
+     * @param x the new x coordinate of the station
+     * @param y the new y coordinate of the station
+     * @return ID of the new station
+     * @throws InvalidNameException if the station name is empty or null
+     * @throws InvalidLocationException if the station location is not within the bounds or is blocked
+     */
     @Override
     public int addStation(String name, int x, int y) throws InvalidNameException, InvalidLocationException {
         // TODO: implement
@@ -173,6 +248,13 @@ public class CityRescueImpl implements CityRescue {
         return id;
     }
 
+    /**
+     * Removes a station's ID as long as it doesn't have any units assigned to it anymore.
+     *
+     * @param stationId the unique identification of the station to be removed
+     * @throws IDNotRecognisedException if the station is not found or recognised
+     * @throws IllegalStateException if the station still owns units
+     */
     @Override
     public void removeStation(int stationId) throws IDNotRecognisedException, IllegalStateException {
         // TODO: implement
@@ -194,6 +276,15 @@ public class CityRescueImpl implements CityRescue {
         }
     }
 
+    /**
+     * Sets the capacity of a station.
+     * Is invalid if the new capacity is less than the current unit count.
+     *
+     * @param stationId the unique identification of the station
+     * @param maxUnits new maximum unit capacity in the station
+     * @throws IDNotRecognisedException if the ID is not recognised
+     * @throws InvalidCapacityException if the new capacity is 0 or less than the number of units
+     */
     @Override
     public void setStationCapacity(int stationId, int maxUnits) throws IDNotRecognisedException, InvalidCapacityException {
         // TODO: implement
@@ -214,6 +305,11 @@ public class CityRescueImpl implements CityRescue {
         station.setCapacity(maxUnits);
     }
 
+    /**
+     * Returns the IDs of all the stations in ascending order.
+     *
+     * @return an array of the station IDs
+     */
     @Override
     public int[] getStationIds() {
         // TODO: implement
@@ -236,6 +332,17 @@ public class CityRescueImpl implements CityRescue {
         return ids;
     }
 
+    /**
+     * Adds a unit to the station.
+     * Throws an exception if the unit is null, station ID cannot be found or if maximum capacity has been met.
+     *
+     * @param stationId the unique identification of the station the unit is to be added to
+     * @param type type of the unit to be added in the station
+     * @return the ID of the new unit
+     * @throws IDNotRecognisedException if the station ID is not recognised
+     * @throws InvalidUnitException if the unit type to be added in the station is invalid
+     * @throws IllegalStateException if the station has no free capacity
+     */
     @Override
     public int addUnit(int stationId, UnitType type) throws IDNotRecognisedException, InvalidUnitException, IllegalStateException {
         // TODO: implement
@@ -288,6 +395,13 @@ public class CityRescueImpl implements CityRescue {
         return id;
     }
 
+    /**
+     * Decommissions a unit based on its ID. Cannot occur if the unit is busy.
+     *
+     * @param unitId the unique identification of the unit to be decommissioned
+     * @throws IDNotRecognisedException if the ID is not recognised
+     * @throws IllegalStateException if the unit cannot be decommissioned
+     */
     @Override
     public void decommissionUnit(int unitId) throws IDNotRecognisedException, IllegalStateException {
         // TODO: implement
@@ -313,6 +427,15 @@ public class CityRescueImpl implements CityRescue {
         }
     }
 
+    /**
+     * Transfers a unit from current station to new station.
+     * The unit must be idle and the station must not be full.
+     *
+     * @param unitId gets the unique identification of the unit to be transferred
+     * @param newStationId gets the unique identification of the station to transfer the unit to
+     * @throws IDNotRecognisedException if the unit's ID or station is not recognised
+     * @throws IllegalStateException if the unit is not idle or the station is full
+     */
     @Override
     public void transferUnit(int unitId, int newStationId) throws IDNotRecognisedException, IllegalStateException {
         // TODO: implement
@@ -344,6 +467,15 @@ public class CityRescueImpl implements CityRescue {
         unit.setLocation(newStation.getX(), newStation.getY());
     }
 
+    /**
+     * Sets a unit's status as out of service or idle.
+     * Units must be idle to go out of service and vice versa.
+     *
+     * @param unitId gets the unique identification of the unit
+     * @param outOfService returns a boolean indicating whether unit is go out of service or idle
+     * @throws IDNotRecognisedException if unit ID is not recognised
+     * @throws IllegalStateException if unit cannot be set out of service or back to idle
+     */
     @Override
     public void setUnitOutOfService(int unitId, boolean outOfService) throws IDNotRecognisedException, IllegalStateException {
         // TODO: implement
@@ -367,6 +499,11 @@ public class CityRescueImpl implements CityRescue {
         }
     }
 
+    /**
+     * Returns all the IDs of the units in ascending order
+     *
+     * @return array of the units Ids
+     */
     @Override
     public int[] getUnitIds() {
         // TODO: implement
@@ -388,6 +525,15 @@ public class CityRescueImpl implements CityRescue {
         return ids;
     }
 
+    /**
+     * Returns a string with the unit ID, the unit type, the home station ID, the location of the unit,
+     * the status of the unit, the incident ID to which the current unit is responding and the work tick,
+     * which is only available if the unit is at the scene.
+     *
+     * @param unitId the unique Identification of the unit to view
+     * @return string containing information regarding the unit
+     * @throws IDNotRecognisedException if the unit ID is not recognised
+     */
     @Override
     public String viewUnit(int unitId) throws IDNotRecognisedException {
         // TODO: implement
@@ -421,6 +567,19 @@ public class CityRescueImpl implements CityRescue {
 
     }
 
+    /**
+     * Reports an incident, including the type, the severity and the location.
+     * Throws an exception if the incident is null, severity is out of the range, the location is out of the bounds,
+     * the location is blocked or if the maximum number of incidents has been reached.
+     *
+     * @param type the type of incident
+     * @param severity the severity of the incident
+     * @param x the x coordinate of the incident location
+     * @param y the y coordinate of the incident location
+     * @return the ID of a new accident being created
+     * @throws InvalidSeverityException if the severity is out of range
+     * @throws InvalidLocationException if the location is out of the bounds or is blocked
+     */
     @Override
     public int reportIncident(IncidentType type, int severity, int x, int y) throws InvalidSeverityException, InvalidLocationException {
         // TODO: implement
@@ -455,6 +614,14 @@ public class CityRescueImpl implements CityRescue {
         return id;
     }
 
+    /**
+     * Cancels an incident by its ID unless it has already been resolved or in progress.
+     * If dispatched, the assigned unit is set to idle.
+     *
+     * @param incidentId the unique identification of the incident to cancel
+     * @throws IDNotRecognisedException if incident ID is not recognised
+     * @throws IllegalStateException if incident cannot be cancelled due to its current state
+     */
     @Override
     public void cancelIncident(int incidentId) throws IDNotRecognisedException, IllegalStateException {
         // TODO: implement
@@ -481,6 +648,16 @@ public class CityRescueImpl implements CityRescue {
         incident.setStatus(IncidentStatus.CANCELLED);
     }
 
+    /**
+     * Escalates the severity of the incident which must be between 1 and 5,
+     * and the incident must not be resolved or cancelled.
+     *
+     * @param incidentId the unique identification of the incident to escalate
+     * @param newSeverity new severity level ranging from 1 to 5
+     * @throws IDNotRecognisedException if incident ID is not recognised
+     * @throws InvalidSeverityException if severity level is not between 1 and 5
+     * @throws IllegalStateException if incident is resolved or cancelled
+     */
     @Override
     public void escalateIncident(int incidentId, int newSeverity) throws IDNotRecognisedException, InvalidSeverityException, IllegalStateException {
         // TODO: implement
@@ -501,6 +678,11 @@ public class CityRescueImpl implements CityRescue {
         incident.setSeverity(newSeverity);
     }
 
+    /**
+     * Returns the IDs of the incidents in ascending order.
+     *
+     * @return an array of the incident ids
+     */
     @Override
     public int[] getIncidentIds() {
         // TODO: implement
@@ -522,6 +704,14 @@ public class CityRescueImpl implements CityRescue {
         return ids;
     }
 
+    /**
+     * Returns a string with the incident ID, the incident type, the severity, the location of the incident,
+     * the status of the incident and the unit ID to which the current incident is resolved by.
+     *
+     * @param incidentId the unique identification of the incident to view
+     * @return a string containing information regarding the incident
+     * @throws IDNotRecognisedException if the incident ID is not recognised
+     */
     @Override
     public String viewIncident(int incidentId) throws IDNotRecognisedException {
         // TODO: implement
@@ -549,6 +739,10 @@ public class CityRescueImpl implements CityRescue {
         );
     }
 
+    /**
+     * Dispatches an available unit to the reported incident. Depends on which unit has the shortest Manhattan distance,
+     * to the location the incident is taking place in.
+     */
     @Override
     public void dispatch() {
         // TODO: implement
@@ -585,6 +779,11 @@ public class CityRescueImpl implements CityRescue {
         }
     }
 
+    /**
+     * Introduces a tick system which keeps track of the time units spend at incident locations and solving them,
+     * updates the units status during, after an incident tracking their work progress in the meantime.
+     * If a unit resolves an incident, it is marked as resolved
+     */
     @Override
     public void tick() {
         // TODO: implement
@@ -643,6 +842,12 @@ public class CityRescueImpl implements CityRescue {
         }
     }
 
+    /**
+     * Returns the status of the city which includes the number of stations, units, incidents, obstacles,
+     * and the ticks. It summarises that state of the rescue system.
+     *
+     * @return a string which illustrates the status of the rescue system
+     */
     @Override
     public String getStatus() {
         StringBuilder st = new StringBuilder();
