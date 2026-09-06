@@ -1,28 +1,41 @@
-# CityRescue Lite+ (Starter Repo)
+# CityRescue — Emergency Dispatch Simulator
 
-This repository is your starting point for the CityRescue Lite+ coursework.
+A deterministic, tick-based emergency dispatch simulator built in Java for a university Object-Oriented Programming module (ECM1410). Models a city's dispatch control room: a 2D grid map with obstacles, stations, emergency units, and incidents that move through a full lifecycle as simulated time advances.
 
-## Quick start (local)
+Grade: 84%
 
-Requirements:
+## Features
+
+- **Grid-based city map** with configurable size and obstacle placement.
+- **Stations** with unit capacity limits, housing emergency units.
+- **Three unit types** — Ambulance, Fire Engine, Police Car — modelled via an abstract `Unit` class with type-specific behaviour expressed through inheritance and method overriding (polymorphism), rather than conditional branching.
+- **Incident lifecycle**: REPORTED → DISPATCHED → IN_PROGRESS → RESOLVED, with support for cancellation and severity escalation.
+- **Deterministic dispatch logic**: units are assigned to incidents using a strict tie-break rule set (Manhattan distance, then unit ID, then home station ID), ensuring identical input always produces identical output — a requirement for automated correctness testing.
+- **Rule-based movement**: units navigate around obstacles using a fixed directional preference (N, E, S, W) rather than pathfinding algorithms.
+- **Design-by-contract validation**: every public method enforces documented preconditions and guarantees system state remains unchanged if an invalid call throws an exception.
+
+## Tech Stack
+
 - Java 17+
-- Maven 3.8+
+- Maven (build and test runner)
+- Arrays only (no Java Collections), per coursework constraints
 
-Run the **public tests**:
-```bash
-mvn -q -Dtest=Public*Test test
-```
+## Core Classes
 
-Run **all tests** that exist in this repository (still only public tests in the starter):
+- `CityRescueImpl` — main implementation of the public `CityRescue` interface (22 methods)
+- `CityMap` — grid dimensions and obstacle/legality checks
+- `Station` — location, capacity, and assigned units
+- `Incident` — type, severity, location, and lifecycle status
+- `Unit` (abstract) — shared unit behaviour; subclassed by `Ambulance`, `FireEngine`, `PoliceCar`
+
+## Running Tests Locally
+
 ```bash
 mvn test
 ```
 
-## What you must implement
-- `src/main/java/cityrescue/CityRescueImpl.java` (main implementation)
-- Supporting model classes (you may add more classes/packages as needed)
-- Keep behaviour deterministic (tie-break rules in the spec)
+Public tests are included for guidance; the full grading suite includes additional hidden tests.
 
 ## Notes
-- This repo contains **public tests only** (used for visible marks).
-- Additional hidden tests will be used for the remaining marks.
+
+Built as a pair-programming assignment. Core design challenges involved enforcing strict determinism (fixed tie-break and movement rules) and using inheritance/polymorphism to differentiate unit behaviour cleanly, without resorting to large conditional blocks.
